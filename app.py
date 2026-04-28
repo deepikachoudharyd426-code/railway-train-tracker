@@ -15,7 +15,6 @@ CITY_5G = {
     'ADI': 80, 'LKO': 75, 'CNB': 70, 'BPL': 65, 'ST': 78,
 }
 
-
 def get_5g_signal(code):
     score = CITY_5G.get(code, 50)
     if score >= 85:
@@ -26,7 +25,6 @@ def get_5g_signal(code):
         return "🟠 Moderate 5G"
     else:
         return "🔴 Weak / No 5G"
-
 
 def get_train_status(train_number, date):
     url = "https://indian-railway-irctc.p.rapidapi.com/api/trains/v1/train/status"
@@ -44,7 +42,6 @@ def get_train_status(train_number, date):
     response = requests.get(url, headers=headers, params=params, verify=False)
     return response.json()
 
-
 def calculate_delay(scheduled, actual):
     if not scheduled or not actual or scheduled == "--" or actual == "--":
         return None
@@ -59,7 +56,6 @@ def calculate_delay(scheduled, actual):
     except Exception:
         return None
 
-
 def time_to_minutes(t):
     if not t or t == "--":
         return None
@@ -69,14 +65,12 @@ def time_to_minutes(t):
     except Exception:
         return None
 
-
 def minutes_to_hhmm(mins):
     if mins is None:
         return "--"
     hrs = int(mins) // 60
     mn = int(mins) % 60
     return f"{hrs}h {mn}m"
-
 
 st.set_page_config(page_title="Indian Railway Tracker", page_icon="🚂", layout="wide")
 
@@ -92,7 +86,7 @@ col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
     train_number = st.text_input("🚆 Train Number", value="", placeholder="e.g. 12051")
 with col2:
-    selected_date = st.date_input("📅 Select Date", value=datetime.today())
+    selected_date = st.date_input("📅 Select Date", value=datetime.today(), format="DD/MM/YYYY")
     date = selected_date.strftime('%Y%m%d')
     display_date = selected_date.strftime('%d/%m/%Y')
 with col3:
@@ -159,7 +153,6 @@ if search:
 
         avg_delay = round(sum(delays) / len(delays)) if delays else 0
 
-        # Calculate total journey time
         first_dep = first_station.get('departureTime', '--') if first_station else '--'
         last_arr = last_station.get('arrivalTime', '--') if last_station else '--'
         first_min = time_to_minutes(first_dep)
@@ -183,7 +176,6 @@ if search:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Journey summary
         if first_station and last_station:
             dep_time = first_station.get('departureTime', '--')
             arr_time = last_station.get('arrivalTime', '--')
