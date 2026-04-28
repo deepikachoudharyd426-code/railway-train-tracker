@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
@@ -60,6 +60,24 @@ def calculate_delay(scheduled, actual):
         return None
 
 
+def time_to_minutes(t):
+    if not t or t == "--":
+        return None
+    try:
+        h, m = map(int, t.split(":"))
+        return h * 60 + m
+    except Exception:
+        return None
+
+
+def minutes_to_hhmm(mins):
+    if mins is None:
+        return "--"
+    hrs = int(mins) // 60
+    mn = int(mins) % 60
+    return f"{hrs}h {mn}m"
+
+
 st.set_page_config(page_title="Indian Railway Tracker", page_icon="🚂", layout="wide")
 
 st.markdown("""
@@ -72,17 +90,28 @@ st.markdown("""
 
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
-    train_number = st.text_input("🚆 Train Number", value="12051")
+    train_number = st.text_input("🚆 Train Number", value="", placeholder="e.g. 12051")
 with col2:
-    today = datetime.today().strftime('%Y%m%d')
-    date = st.text_input("📅 Date (YYYYMMDD)", value=today)
+    selected_date = st.date_input("📅 Select Date", value=datetime.today())
+    date = selected_date.strftime('%Y%m%d')
+    display_date = selected_date.strftime('%d/%m/%Y')
 with col3:
     st.markdown("<br>", unsafe_allow_html=True)
     search = st.button("🔍 Track Train", type="primary", use_container_width=True)
 
+st.markdown(f"""
+    <p style='text-align:right; color:#888; font-size:13px; margin-top:-10px;'>
+    📅 Today: <b>{datetime.today().strftime('%d/%m/%Y')}</b>
+    </p>
+""", unsafe_allow_html=True)
+
 st.markdown("<hr>", unsafe_allow_html=True)
 
 if search:
+    if not train_number:
+        st.warning("⚠️ Please enter a Train Number first!")
+        st.stop()
+
     with st.spinner("Fetching live train data..."):
         data = get_train_status(train_number, date)
 
@@ -102,7 +131,7 @@ if search:
                 <h2 style='color:#1A56DB; margin:0;'>🚆 {train_name}</h2>
                 <p style='color:#555; margin:5px 0 0 0;'>
                 Train No: <b>{train_number}</b> &nbsp;|&nbsp;
-                Date: <b>{date[:4]}-{date[4:6]}-{date[6:]}</b>
+                Date: <b>{display_date}</b>
                 </p>
             </div>
         """, unsafe_allow_html=True)
@@ -115,6 +144,8 @@ if search:
         delays = []
         last_known = None
         next_station = None
+        first_station = stations_raw[0] if stations_raw else None
+        last_station = stations_raw[-1] if stations_raw else None
 
         for s in stations_raw:
             actual = s.get('actual_arrival_time', '--')
@@ -128,13 +159,43 @@ if search:
 
         avg_delay = round(sum(delays) / len(delays)) if delays else 0
 
-        m1, m2, m3, m4 = st.columns(4)
+        # Calculate total journey time
+        first_dep = first_station.get('departureTime', '--') if first_station else '--'
+        last_arr = last_station.get('arrivalTime', '--') if last_station else '--'
+        first_min = time_to_minutes(first_dep)
+        last_min = time_to_minutes(last_arr)
+        if first_min is not None and last_min is not None:
+            total_mins = last_min - first_min
+            if total_mins < 0:
+                total_mins += 1440
+            total_journey = minutes_to_hhmm(total_mins)
+        else:
+            total_journey = "--"
+
+        m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("🚉 Total Stations", len(stations_raw))
         m2.metric("⏱️ Avg Delay", f"{avg_delay} min")
+        m3.metric("🕐 Total Journey", total_journey)
         if last_known:
-            m3.metric("📍 Last Reported", last_known.get('stationName', '--'))
+            m4.metric("📍 Last Reported", last_known.get('stationName', '--'))
         if next_station:
-            m4.metric("⏩ Next Station", next_station.get('stationName', '--'))
+            m5.metric("⏩ Next Station", next_station.get('stationName', '--'))
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Journey summary
+        if first_station and last_station:
+            dep_time = first_station.get('departureTime', '--')
+            arr_time = last_station.get('arrivalTime', '--')
+            origin = first_station.get('stationName', '--')
+            destination = last_station.get('stationName', '--')
+
+            st.markdown("### 🗺️ Journey Summary")
+            j1, j2, j3, j4 = st.columns(4)
+            j1.metric("🟢 Origin", origin)
+            j2.metric("🔴 Destination", destination)
+            j3.metric("🕐 Departure", dep_time)
+            j4.metric("🕐 Expected Arrival", arr_time)
 
         st.markdown("<br>", unsafe_allow_html=True)
 
