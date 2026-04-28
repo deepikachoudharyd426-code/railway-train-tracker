@@ -73,6 +73,13 @@ def minutes_to_hhmm(mins):
     return f"{hrs}h {mn}m"
 
 st.set_page_config(page_title="Indian Railway Tracker", page_icon="🚂", layout="wide")
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
     <h1 style='text-align:center; color:#1A56DB;'>🚂 Indian Railway Live Train Tracker</h1>
