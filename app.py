@@ -72,7 +72,7 @@ def minutes_to_hhmm(mins):
     mn = int(mins) % 60
     return f"{hrs}h {mn}m"
 
-st.set_page_config(page_title="Indian Railway Tracker", page_icon="🚂", layout="wide")
+st.set_page_config(page_title="GoRail", page_icon="🚂", layout="wide")
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -82,7 +82,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-    <h1 style='text-align:center; color:#1A56DB;'>🚂 Indian Railway Live Train Tracker</h1>
+    <h1 style='text-align:center; color:#1A56DB;'>🚂 GoRail</h1>
     <p style='text-align:center; color:#555; font-size:18px;'>
     Real-time Status &nbsp;•&nbsp; Delay Prediction &nbsp;•&nbsp; ETA &nbsp;•&nbsp; 5G Coverage
     </p>
